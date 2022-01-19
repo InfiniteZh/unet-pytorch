@@ -33,10 +33,15 @@ class UnetDataset(Dataset):
         #-------------------------------#
         #   数据增强
         #-------------------------------#
-        jpg, png    = self.get_random_data(jpg, png, self.input_shape, random = self.train)
+        # jpg, png    = self.get_random_data(jpg, png, self.input_shape, random = self.train)
+        # 转置 将 h w c 转成 c h w 
+        # jpg         = np.transpose(preprocess_input(np.array(jpg, np.float64)), [2,0,1])
+        jpg         = preprocess_input(np.array(jpg, np.float64))
+        jpg         = np.expand_dims(jpg, axis=0) #(1, 512, 512)
 
-        jpg         = np.transpose(preprocess_input(np.array(jpg, np.float64)), [2,0,1])
         png         = np.array(png)
+        png[png == 255] = 1
+        
         png[png >= self.num_classes] = self.num_classes
         #-------------------------------------------------------#
         #   转化成one_hot的形式

@@ -20,7 +20,6 @@ def fit_one_epoch(model_train, model, loss_history, optimizer, epoch, epoch_step
             if iteration >= epoch_step: 
                 break
             imgs, pngs, labels = batch
-
             with torch.no_grad():
                 imgs    = torch.from_numpy(imgs).type(torch.FloatTensor)
                 pngs    = torch.from_numpy(pngs).long()

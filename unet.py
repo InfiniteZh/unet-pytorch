@@ -1,5 +1,6 @@
 import colorsys
 import copy
+from re import I
 import time
 
 import cv2
@@ -26,15 +27,15 @@ class Unet(object):
         #   训练好后logs文件夹下存在多个权值文件，选择验证集损失较低的即可。
         #   验证集损失较低不代表miou较高，仅代表该权值在验证集上泛化性能较好。
         #-------------------------------------------------------------------#
-        "model_path"    : 'model_data/unet_vgg_voc.pth',
+        "model_path"    : 'logs/ep001-loss0.188-val_loss0.189.pth',
         #--------------------------------#
         #   所需要区分的类的个数+1
         #--------------------------------#
-        "num_classes"   : 21,
+        "num_classes"   : 2,
         #--------------------------------#
         #   所使用的的主干网络：vgg、resnet50   
         #--------------------------------#
-        "backbone"      : "vgg",
+        "backbone"      : "resnet50",
         #--------------------------------#
         #   输入图片的大小
         #--------------------------------#
@@ -62,7 +63,7 @@ class Unet(object):
         #   画框设置不同的颜色
         #---------------------------------------------------#
         if self.num_classes <= 21:
-            self.colors = [ (0, 0, 0), (128, 0, 0), (0, 128, 0), (128, 128, 0), (0, 0, 128), (128, 0, 128), (0, 128, 128), 
+            self.colors = [ (0, 0, 0), (255,255,255), (0, 128, 0), (128, 128, 0), (0, 0, 128), (128, 0, 128), (0, 128, 128), 
                             (128, 128, 128), (64, 0, 0), (192, 0, 0), (64, 128, 0), (192, 128, 0), (64, 0, 128), (192, 0, 128), 
                             (64, 128, 128), (192, 128, 128), (0, 64, 0), (128, 64, 0), (0, 192, 0), (128, 192, 0), (0, 64, 128), 
                             (128, 64, 12)]
@@ -98,7 +99,7 @@ class Unet(object):
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         #---------------------------------------------------------#
-        image       = cvtColor(image)
+        # image       = cvtColor(image)
         #---------------------------------------------------#
         #   对输入图像进行一个备份，后面用于绘图
         #---------------------------------------------------#
@@ -109,11 +110,17 @@ class Unet(object):
         #   给图像增加灰条，实现不失真的resize
         #   也可以直接resize进行识别
         #---------------------------------------------------------#
-        image_data, nw, nh  = resize_image(image, (self.input_shape[1],self.input_shape[0]))
+        # image_data, nw, nh  = resize_image(image, (self.input_shape[1],self.input_shape[0]))
+        image_data = image
+        nw = orininal_w
+        nh = orininal_h
         #---------------------------------------------------------#
         #   添加上batch_size维度
         #---------------------------------------------------------#
-        image_data  = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
+        # image_data  = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
+        image_data = preprocess_input(np.array(image_data, np.float32))
+        image_data = np.expand_dims(image_data, 0)
+        image_data = np.expand_dims(image_data, 0)
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
@@ -145,11 +152,9 @@ class Unet(object):
         #------------------------------------------------#
         #   创建一副新图，并根据每个像素点的种类赋予颜色
         #------------------------------------------------#
-        seg_img = np.zeros((np.shape(pr)[0], np.shape(pr)[1], 3))
+        seg_img = np.zeros((np.shape(pr)[0], np.shape(pr)[1]))
         for c in range(self.num_classes):
-            seg_img[:,:,0] += ((pr[:,: ] == c )*( self.colors[c][0] )).astype('uint8')
-            seg_img[:,:,1] += ((pr[:,: ] == c )*( self.colors[c][1] )).astype('uint8')
-            seg_img[:,:,2] += ((pr[:,: ] == c )*( self.colors[c][2] )).astype('uint8')
+            seg_img[:,:] =  seg_img[:,:] + (((pr[:,:] == c) * c) * 255).astype('uint8')
 
         #------------------------------------------------#
         #   将新图片转换成Image的形式
@@ -169,7 +174,7 @@ class Unet(object):
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         #---------------------------------------------------------#
-        image       = cvtColor(image)
+        # image       = cvtColor(image)
         #---------------------------------------------------------#
         #   给图像增加灰条，实现不失真的resize
         #   也可以直接resize进行识别
@@ -224,7 +229,7 @@ class Unet(object):
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         #---------------------------------------------------------#
-        image       = cvtColor(image)
+        # image       = cvtColor(image)
         orininal_h  = np.array(image).shape[0]
         orininal_w  = np.array(image).shape[1]
         #---------------------------------------------------------#

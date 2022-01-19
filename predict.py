@@ -6,6 +6,7 @@ import time
 
 import cv2
 import numpy as np
+import os
 from PIL import Image
 
 from unet import Unet
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     #   'fps'表示测试fps，使用的图片是img里面的street.jpg，详情查看下方注释。
     #   'dir_predict'表示遍历文件夹进行检测并保存。默认遍历img文件夹，保存img_out文件夹，详情查看下方注释。
     #----------------------------------------------------------------------------------------------------------#
-    mode = "predict"
+    mode = "dir_predict"
     #----------------------------------------------------------------------------------------------------------#
     #   video_path用于指定视频的路径，当video_path=0时表示检测摄像头
     #   想要检测视频，则设置如video_path = "xxx.mp4"即可，代表读取出根目录下的xxx.mp4文件。
@@ -71,7 +72,7 @@ if __name__ == "__main__":
                 continue
             else:
                 r_image = unet.detect_image(image)
-                r_image.show()
+                r_image.save(os.path.join(dir_save_path, 'pred.png'))
 
     elif mode == "video":
         capture=cv2.VideoCapture(video_path)
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         print(str(tact_time) + ' seconds, ' + str(1/tact_time) + 'FPS, @batch_size 1')
         
     elif mode == "dir_predict":
-        import os
+        
         from tqdm import tqdm
 
         img_names = os.listdir(dir_origin_path)
